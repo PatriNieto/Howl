@@ -1,106 +1,135 @@
 import './style.css'
 
-import * as THREE from 'https://unpkg.com/three@latest/build/three.module.js';
-//import { OrbitControls } from 'https://unpkg.com/three@latest/examples/jsm/controls/OrbitControls.js';
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 
+// 1. Scene
+const scene = new THREE.Scene();
 
+// 2. Camera
+const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
 
-//1.scene
+// 3. Renderer
+const renderer = new THREE.WebGLRenderer({
+  canvas: document.querySelector('#bg')
+});
 
-const scene = new THREE.Scene()
-//2.camera
-const camera= new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000)
-//3.render
-const renderer = new THREE.WebGLRenderer(
-  {
-    //wich element to use
-    canvas : document.querySelector('#bg')
-  }
-)
+// Set ratio renderer
+renderer.setPixelRatio(window.devicePixelRatio);
 
-//set ratio renderer
-renderer.setPixelRatio(window.devicePixelRatio)
+// Full screen canvas
+renderer.setSize(window.innerWidth, window.innerHeight);
 
-//full screen canvas 
-renderer.setSize(window.innerWidth, window.innerHeight)
-
-//camera.position.setZ(30)
-
-
-
-const geo = new THREE.TorusGeometry(10,3,16,100)
-const material = new THREE.MeshBasicMaterial(
-  {color: '#DFFF00', 
-    wireframe:true
-   }
-)
-
+// 4. Add Torus geometry to scene
+const geo = new THREE.TorusGeometry(10, 3, 16, 100);
 const material2 = new THREE.MeshStandardMaterial({
-  color: 0xDFFF00 
-})
+  color: 0xDFFF00,
+});
 
-const torus = new THREE.Mesh(geo, material2)
+// Create torus mesh
+const torus = new THREE.Mesh(geo, material2);
 
-//lo aadimos a la escena
-scene.add(torus)
+// Add torus to the scene
+scene.add(torus);
 
+// 5. Lighting
+const pointlight = new THREE.PointLight(0xffffff);
+pointlight.position.set(0, 6, 6);
+pointlight.intensity = 50;
+scene.add(pointlight);
 
-//añadimos luces
-const pointlight = new THREE.PointLight(0xffffff)
-pointlight.position.set(0,6,6)
-pointlight.intensity=50
-scene.add(pointlight)
+// 6. Load textures with promises
+const textureLoader = new THREE.TextureLoader();
 
+const diffuseMap = textureLoader.load('models/wolf_with_animations/textures/Material__wolf_col_tga_diffuse.jpeg');
+const occlusionMap = textureLoader.load('models/wolf_with_animations/textures/Material__wolf_col_tga_occlusion.jpeg');
+const specularGlossinessMap = textureLoader.load('models/wolf_with_animations/textures/Material__wolf_col_tga_specularGlossiness.jpeg');
 
-/* const ambientLight = new THREE.AmbientLight(0xffffff)
-ambientLight.position.set(5,5,5)
-scene.add(ambientLight) */
+// Ensure the textures are loaded properly
+Promise.all([diffuseMap, occlusionMap, specularGlossinessMap]).then(() => {
+  console.log('All textures loaded successfully');
+}).catch((error) => {
+  console.error('Error loading textures:', error);
+});
 
-//const controls = new OrbitControls(camera, renderer.domElement)
+// 7. Load GLTF model and animation
+let mixer; // Declare mixer for animations
+const loader = new GLTFLoader().setPath('models/wolf_with_animations/');
+loader.load('scene.gltf', function (gltf) {
+  const model = gltf.scene;
+  console.log('GLTF model loaded:', model); // Ensure the model is loaded correctly
 
-function addStar(){
-  const geoStar = new THREE.SphereGeometry(0.25,24,24)
-  const materialStar = new THREE.MeshStandardMaterial(0xffffff)
-  const star = new THREE.Mesh(geoStar, materialStar)
-//generar random
-    const [x, y ,z] = Array(3).fill().map(()=>THREE.MathUtils.randFloatSpread(100)) 
-    star.position.set(x,y,z)
-    scene.add(star)
-  
+  // Handle animation
+  mixer = new THREE.AnimationMixer(model);
+
+  // Traverse the model and apply textures
+  model.traverse((child) => {
+    if (child.isMesh) {
+      // Apply textures
+      child.material = new THREE.MeshStandardMaterial({
+        map: diffuseMap,  // Diffuse texture
+        aoMap: occlusionMap,  // Ambient occlusion
+        roughnessMap: specularGlossinessMap,  // Specular map
+        
+      });
+    }
+  });
+
+  // Add the model to the scene
+  scene.add(model);
+
+  // Ensure animations are played
+  gltf.animations.forEach((clip) => {
+    mixer.clipAction(clip).play();  // Play all animations from the GLTF file
+  });
+}, undefined, function (error) {
+  console.error('Error loading GLTF model:', error);  // Print any errors during model load
+});
+
+// 8. Add stars to the scene
+function addStar() {
+  const geoStar = new THREE.SphereGeometry(0.25, 24, 24);
+  const materialStar = new THREE.MeshStandardMaterial({ color: 0xffffff });
+  const star = new THREE.Mesh(geoStar, materialStar);
+
+  // Generate random position
+  const [x, y, z] = Array(3).fill().map(() => THREE.MathUtils.randFloatSpread(100));
+  star.position.set(x, y, z);
+  scene.add(star);
 }
 
-//llamamos indicando el numero de estrellas ue queremos
-Array(200).fill().forEach(addStar)
+// Create 200 stars
+Array(200).fill().forEach(addStar);
 
+// 9. Move camera based on scroll
+function moveCamera() {
+  // Get the scroll position
+  const t = document.body.getBoundingClientRect().top;
 
-function moveCamera(){
-   
-  //calculamos donde esta
-  const t = document.body.getBoundingClientRect().top
-  torus.rotation.x += 0.05
-  torus.rotation.y += 0.05
-  torus.rotation.z += 0.05
+  // Rotate the torus
+  torus.rotation.x += 0.05;
+  torus.rotation.y += 0.05;
+  torus.rotation.z += 0.05;
 
-  //y que se mueva la camera
-   camera.position.z = t * -0.01
-  /*camera.position.x += t * - 0.0002  
-  camera.position.y += t * - 0.0002 */
-
+  // Move the camera based on scroll
+  camera.position.z = t * -0.01;
 }
 
-document.body.onscroll = moveCamera
+document.body.onscroll = moveCamera;
 
-function animate(){
-  //le decimos al navegador que es una animacion , pensar en un game loop
-  requestAnimationFrame(animate)
- /*  torus.rotation.x += 0.01
-  torus.rotation.y += 0.01
-  torus.rotation.z += 0.01 */
+// 10. Animation loop
+function animate() {
+  // Call the animation frame recursively (game loop)
+  requestAnimationFrame(animate);
 
-  //controls.update()
+  // Update animations
+  if (mixer) {
+    mixer.update(0.01); // Update the animation mixer at each frame
+  }
 
-  renderer.render(scene, camera)
-
+  // Render the scene
+  renderer.render(scene, camera);
 }
 
-animate()
+// Start the animation loop
+animate();
