@@ -75,6 +75,7 @@ loader.load('scene.gltf', function (gltf) {
     }
   });
 
+  
   // Add the model to the scene
   scene.add(model);
 
