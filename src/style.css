@@ -37,3 +37,34 @@ main {
 p{
   font-size: 35px;
 }
+
+#title {
+  position: absolute;
+	width: 100%;
+	text-align: center;
+  align-items: center;
+	z-index: 100;
+	display:block;
+}
+#landing {
+  height: 100vh; /* Ocupa toda la altura de la pantalla */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+h1 {
+  
+}
+/* h1 {
+  font-size: 80px;
+  color: white;
+  text-shadow: 0px 0px 10px #ff0000, 0px 0px 20px #ff4444;
+  animation: glitch 0.5s infinite alternate;
+}
+
+@keyframes glitch {
+  0% { transform: translateX(0px); }
+  50% { transform: translateX(2px); text-shadow: -2px 0 red, 2px 0 blue; }
+  100% { transform: translateX(-2px); text-shadow: -2px 0 blue, 2px 0 red; }
+}
+ */

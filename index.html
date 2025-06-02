@@ -13,15 +13,23 @@
     <div id="loadingScreen">Cargando...</div> <!-- Pantalla de carga -->
 
     <canvas id="bg"></canvas>  
-    <main id="mainContent" style="display: none;">
+    <main id="mainContent" 
+    class="vw-100"
+    style="display: none;">
       <header>
-        <h1>HOWL</h1>
+         <div
+         id="landing"
+         class="vh-100">
+            <h1
+        id="title">HOWL</h1>
+         </div>       
       </header>
       <h3>By Allen Ginsberg</h3>
       <h5 class="italic">For Carl Solomon</h5>
      <br>
       <section
-      class="container-fluid">
+      id="section-torus"
+      class="container">
         <h4>I</h4>
         <p>I saw the best minds of my generation destroyed by madness, starving hysterical naked,
           dragging themselves through the negro streets at dawn looking for an angry fix,
@@ -104,6 +112,7 @@
       </section>
       <br>
       <section
+      id="section-transition"
       class="container">
         <h4>II</h4>
         <p>What sphinx of cement and aluminum bashed open their skulls and ate up their brains and imagination?
@@ -125,9 +134,10 @@
       </section>
       <br>
       <section
-      class="container pt-5">
+      id="section-wolf"
+      class="container">   
         <h4>III</h4>
-     
+     <p>
         Carl Solomon! I’m with you in Rockland
       where you’re madder than I am
    I’m with you in Rockland
@@ -166,7 +176,7 @@
       where we wake up electrified out of the coma by our own souls’ airplanes roaring over the roof they’ve come to drop angelic bombs the hospital illuminates itself    imaginary walls collapse    O skinny legions run outside    O starry-spangled shock of mercy the eternal war is here    O victory forget your underwear we’re free
    I’m with you in Rockland
       in my dreams you walk dripping from a sea-journey on the highway across America in tears to the door of my cottage in the Western night
-   
+   </p>
       </section>
       <p>San Francisco, 1955—1956</p>
     </main>
@@ -182,5 +192,6 @@
       mainContent.style.display = 'block';
     }</script>
   <script type="module" src="/src/main.js"></script>
+  
   </body>
 </html>

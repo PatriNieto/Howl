@@ -1,136 +1,137 @@
-import './style.css'
-
+import './style.css';
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import { FontLoader } from 'three/examples/jsm/loaders/FontLoader.js';
+import { TextGeometry } from 'three/examples/jsm/geometries/TextGeometry.js';
 
-// 1. Scene
+// Escena
 const scene = new THREE.Scene();
 
-// 2. Camera
+// Cámara
 const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+camera.position.z = 30;
 
-// 3. Renderer
+// Renderer
 const renderer = new THREE.WebGLRenderer({
-  canvas: document.querySelector('#bg')
+  canvas: document.querySelector('#bg'),
 });
-
-// Set ratio renderer
 renderer.setPixelRatio(window.devicePixelRatio);
-
-// Full screen canvas
 renderer.setSize(window.innerWidth, window.innerHeight);
 
-// 4. Add Torus geometry to scene
+// Torus
 const geo = new THREE.TorusGeometry(10, 3, 16, 100);
-const material2 = new THREE.MeshStandardMaterial({
-  color: 0xDFFF00,
-});
-
-// Create torus mesh
-const torus = new THREE.Mesh(geo, material2);
-
-// Add torus to the scene
+const materialTorus = new THREE.MeshStandardMaterial({ color: 0xdfff00 });
+const torus = new THREE.Mesh(geo, materialTorus);
+torus.position.set(0, 130, 0);
 scene.add(torus);
 
-// 5. Lighting
-const pointlight = new THREE.PointLight(0xffffff);
-pointlight.position.set(0, 6, 6);
-pointlight.intensity = 50;
-scene.add(pointlight);
+// Iluminación
+const pointLight = new THREE.PointLight(0xffffff, 50);
+pointLight.position.set(6, 6, 6);
+scene.add(pointLight);
 
-// 6. Load textures with promises
-const textureLoader = new THREE.TextureLoader();
+const pointLight2 = new THREE.PointLight(0x78df00, 50);
+pointLight2.position.set(0, 0, -1);
+scene.add(pointLight2);
 
-const diffuseMap = textureLoader.load('models/wolf_with_animations/textures/Material__wolf_col_tga_diffuse.jpeg');
-const occlusionMap = textureLoader.load('models/wolf_with_animations/textures/Material__wolf_col_tga_occlusion.jpeg');
-const specularGlossinessMap = textureLoader.load('models/wolf_with_animations/textures/Material__wolf_col_tga_specularGlossiness.jpeg');
+const directionalLight = new THREE.DirectionalLight(0xe83030);
+directionalLight.position.set(0, 10, 0);
+directionalLight.target.position.set(-5, 0, 0);
+scene.add(directionalLight);
+scene.add(directionalLight.target);
 
-// Ensure the textures are loaded properly
-Promise.all([diffuseMap, occlusionMap, specularGlossinessMap]).then(() => {
-  console.log('All textures loaded successfully');
-}).catch((error) => {
-  console.error('Error loading textures:', error);
-});
+// Texto 3D
+const fontLoader = new FontLoader();
+fontLoader.load(
+  'https://threejs.org/examples/fonts/helvetiker_bold.typeface.json',
+  (font) => {
+    const textGeometry = new TextGeometry('HOWL', {
+      font: font,
+      size: 15,
+      depth: 1,
+      height: 5,
+      curveSegments: 12,
+      bevelEnabled: true,
+      bevelThickness: 0.3,
+      bevelSize: 0.9,
+      bevelSegments: 5,
+    });
 
-// 7. Load GLTF model and animation
-let mixer; // Declare mixer for animations
+    const textMaterial = new THREE.MeshStandardMaterial({
+      color: 0xffffff,
+      emissive: 0x550000,
+    });
+    const textMesh = new THREE.Mesh(textGeometry, textMaterial);
+    textMesh.position.set(-30, -5, 0);
+    scene.add(textMesh);
+  }
+);
+
+// Modelo GLTF
+let wolf;
+let mixer;
 const loader = new GLTFLoader().setPath('models/wolf_with_animations/');
-loader.load('scene.gltf', function (gltf) {
-  const model = gltf.scene;
-  console.log('GLTF model loaded:', model); // Ensure the model is loaded correctly
+loader.load(
+  'scene.gltf',
+  (gltf) => {
+    wolf = gltf.scene;
+    wolf.scale.set(2, 2, 2);
+    wolf.position.set(0, -5, -30);
+    scene.add(wolf);
 
-  // Handle animation
-  mixer = new THREE.AnimationMixer(model);
+    mixer = new THREE.AnimationMixer(wolf);
+    gltf.animations.forEach((clip) => {
+      mixer.clipAction(clip).play();
+    });
+  },
+  undefined,
+  (error) => {
+    console.error('Error loading model:', error);
+  }
+);
 
-  // Traverse the model and apply textures
-  model.traverse((child) => {
-    if (child.isMesh) {
-      // Apply textures
-      child.material = new THREE.MeshStandardMaterial({
-        map: diffuseMap,  // Diffuse texture
-        aoMap: occlusionMap,  // Ambient occlusion
-        roughnessMap: specularGlossinessMap,  // Specular map
-        
-      });
-    }
-  });
-
-  
-  // Add the model to the scene
-  scene.add(model);
-
-  // Ensure animations are played
-  gltf.animations.forEach((clip) => {
-    mixer.clipAction(clip).play();  // Play all animations from the GLTF file
-  });
-}, undefined, function (error) {
-  console.error('Error loading GLTF model:', error);  // Print any errors during model load
-});
-
-// 8. Add stars to the scene
+// Estrellas
 function addStar() {
   const geoStar = new THREE.SphereGeometry(0.25, 24, 24);
   const materialStar = new THREE.MeshStandardMaterial({ color: 0xffffff });
   const star = new THREE.Mesh(geoStar, materialStar);
-
-  // Generate random position
-  const [x, y, z] = Array(3).fill().map(() => THREE.MathUtils.randFloatSpread(100));
+  const [x, y, z] = Array(3)
+    .fill()
+    .map(() => THREE.MathUtils.randFloatSpread(100));
   star.position.set(x, y, z);
   scene.add(star);
 }
-
-// Create 200 stars
 Array(200).fill().forEach(addStar);
 
-// 9. Move camera based on scroll
+// Movimiento cámara
 function moveCamera() {
-  // Get the scroll position
   const t = document.body.getBoundingClientRect().top;
 
-  // Rotate the torus
-  torus.rotation.x += 0.05;
-  torus.rotation.y += 0.05;
-  torus.rotation.z += 0.05;
-
-  // Move the camera based on scroll
-  camera.position.z = t * -0.01;
+  if (t >= 0) {
+    // Estado inicial
+    torus.rotation.x += 0.01;
+    torus.rotation.y += 0.01;
+    camera.position.set(0, 0, 30);
+    camera.lookAt(0, 0, 0);
+  } else if (t < -300 && t > -800) {
+    // Segunda fase
+    const progress = (-t - 300) / 500;
+    camera.position.set(0, -1, 30 - progress * 60);
+    if (wolf) camera.lookAt(wolf.position);
+  } else if (t <= -800) {
+    // Tercera fase: órbita
+ const angle = (-t - 800) * 0.0005;
+    camera.position.x = Math.sin(angle) * 20;
+    camera.position.z = Math.cos(angle) * 20;
+    camera.lookAt(0, 0, -30); 
+  }
 }
 
-document.body.onscroll = moveCamera;
-
-// 10. Animation loop
+// Animación
 function animate() {
-  // Call the animation frame recursively (game loop)
   requestAnimationFrame(animate);
-
-  // Update animations
-  if (mixer) {
-    mixer.update(0.01); // Update the animation mixer at each frame
-  }
-
-  // Render the scene
+  moveCamera();
+  if (mixer) mixer.update(0.01);
   renderer.render(scene, camera);
 }
-
-// Start the animation loop
 animate();
